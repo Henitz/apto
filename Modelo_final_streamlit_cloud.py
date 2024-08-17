@@ -105,9 +105,12 @@ def main():
         st.write('Modelo e scalers carregados com sucesso.')
 
         # Inputs do usuário
-        area_util = st.number_input("Área Útil (m²)", min_value=0.0, value=0.0, step=1.0)
+        area_util = st.text_input("Área Útil (m²)", value="0,0")
         suites = st.number_input("Número de Suítes", min_value=0, value=0, step=1)
         andar = st.number_input("Andar", min_value=0, value=0, step=1)
+
+        # Convertendo a entrada de área útil para float
+        area_util = float(area_util.replace(",", "."))
 
         input_data = pd.DataFrame({
             'area_util': [area_util],
