@@ -50,31 +50,15 @@ def load_model(model_path, scaler_X_path, scaler_y_path):
 
     model_config = checkpoint['model_config']
     model = RegularizedRegressionModel(
-        model_config['input_size'],
-        model_config['hidden_sizes'],
-        model_config['output_size'],
-        model_config['l1_lambda'],
-        model_config['l2_lambda']
+        input_size=4,  # Ajustando para 4 entradas na camada de entrada
+        hidden_sizes=model_config['hidden_sizes'],
+        output_size=model_config['output_size'],
+        l1_lambda=model_config['l1_lambda'],
+        l2_lambda=model_config['l2_lambda']
     )
 
     state_dict = checkpoint['model_state_dict']
-
-    # Debugging: Imprimir chaves e formas no state_dict e no modelo carregado
-    for key in state_dict:
-        if key in model.state_dict():
-            st.write(f"Chave: {key}")
-            st.write(f"Forma esperada no modelo: {model.state_dict()[key].shape}")
-            st.write(f"Forma encontrada no state_dict: {state_dict[key].shape}")
-        else:
-            st.write(f"Chave {key} não encontrada no modelo carregado.")
-
-    # Ajustar manualmente o state_dict para corresponder as camadas
-    adjusted_state_dict = {}
-    for key in state_dict:
-        if key in model.state_dict() and state_dict[key].shape == model.state_dict()[key].shape:
-            adjusted_state_dict[key] = state_dict[key]
-
-    model.load_state_dict(adjusted_state_dict, strict=False)
+    model.load_state_dict(state_dict, strict=False)
 
     with open(scaler_X_path, 'rb') as f:
         scaler_X = pickle.load(f)
