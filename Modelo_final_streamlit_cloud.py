@@ -9,13 +9,13 @@ import tempfile
 
 # Definição da função para baixar arquivos temporários do GitHub
 def baixar_arquivo_temporario(url):
-    st.write(f"Baixando arquivo de {url}...")
+    # st.write(f"Baixando arquivo de {url}...")
     response = requests.get(url)
     if response.status_code == 200:
         temp_file = tempfile.NamedTemporaryFile(delete=False)
         with open(temp_file.name, 'wb') as f:
             f.write(response.content)
-        st.write(f"Arquivo baixado e salvo em {temp_file.name}")
+        # st.write(f"Arquivo baixado e salvo em {temp_file.name}")
         return temp_file.name
     else:
         st.error(f"Erro ao baixar o arquivo: {response.status_code}")
@@ -102,7 +102,7 @@ def main():
 
     if model_path and scaler_X_path and scaler_y_path:
         model, scaler_X, scaler_y = load_model(model_path, scaler_X_path, scaler_y_path)
-        st.write('Modelo e scalers carregados com sucesso.')
+        # st.write('Modelo e scalers carregados com sucesso.')
 
         # Inputs do usuário
         area_util = st.text_input("Área Útil (m²)", value="0,0")
