@@ -58,10 +58,20 @@ def load_model(model_path, scaler_X_path, scaler_y_path):
     )
 
     state_dict = checkpoint['model_state_dict']
-    adjusted_state_dict = {}
 
+    # Debugging: Imprimir chaves e formas no state_dict e no modelo carregado
     for key in state_dict:
-        if key in model.state_dict() and state_dict[key].shape == model.state_dict()[key].shape():
+        if key in model.state_dict():
+            st.write(f"Chave: {key}")
+            st.write(f"Forma esperada no modelo: {model.state_dict()[key].shape}")
+            st.write(f"Forma encontrada no state_dict: {state_dict[key].shape}")
+        else:
+            st.write(f"Chave {key} não encontrada no modelo carregado.")
+
+    # Ajustar manualmente o state_dict para corresponder as camadas
+    adjusted_state_dict = {}
+    for key in state_dict:
+        if key in model.state_dict() and state_dict[key].shape == model.state_dict()[key].shape:
             adjusted_state_dict[key] = state_dict[key]
 
     model.load_state_dict(adjusted_state_dict, strict=False)
