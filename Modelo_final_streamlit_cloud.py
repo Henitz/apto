@@ -77,7 +77,7 @@ def load_model(model_path, scaler_X_path, scaler_y_path):
     return model, scaler_X, scaler_y
 
 # URLs dos arquivos no GitHub
-model_url = 'https://github.com/Henitz/apto/raw/master/model_final.pth'
+model_url = 'https://github.com/Henitz/apto/raw/master/best_model.pth'
 scaler_X_url = 'https://github.com/Henitz/apto/raw/master/scaler_X.pkl'
 scaler_y_url = 'https://github.com/Henitz/apto/raw/master/scaler_y.pkl'
 
