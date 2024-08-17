@@ -117,7 +117,9 @@ def main():
 
         if st.button("Prever Valor"):
             prediction = make_prediction(model, scaler_X, scaler_y, input_data)
-            st.write(f"Valor Previsto: R$ {prediction[0][0]:,.2f}")
+            # Formatar o valor previsto com separador de milhar como ponto e decimal como vírgula
+            valor_formatado = f"R$ {prediction[0][0]:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
+            st.write(f"Valor Previsto: {valor_formatado}")
     else:
         st.error('Erro ao carregar o modelo ou os scalers.')
 
