@@ -6,6 +6,16 @@ import pickle
 import streamlit as st
 import requests
 import tempfile
+import random
+
+# Definindo a semente para garantir reprodutibilidade
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 # Definição da função para baixar arquivos temporários do GitHub
 def baixar_arquivo_temporario(url):
@@ -70,6 +80,9 @@ def load_model(model_path, scaler_X_path, scaler_y_path):
 
     model.load_state_dict(adjusted_state_dict, strict=False)
 
+    # Garantir que o modelo esteja em modo de avaliação
+    model.eval()
+
     with open(scaler_X_path, 'rb') as f:
         scaler_X = pickle.load(f)
     with open(scaler_y_path, 'rb') as f:
@@ -89,6 +102,9 @@ def make_prediction(model, scaler_X, scaler_y, input_data):
 # Interface Streamlit
 def main():
     st.title("Predição de Valor de Apartamento")
+
+    # Definir a semente
+    set_seed(42)
 
     # URLs dos arquivos no GitHub
     model_url = 'https://github.com/Henitz/apto/raw/master/best_model.pth'
