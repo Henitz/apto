@@ -74,7 +74,18 @@ def load_model(model_path, scaler_X_path, scaler_y_path):
     )
 
     state_dict = checkpoint['model_state_dict']
-    model.load_state_dict(state_dict)
+
+    # Carregar o state_dict manualmente, camada por camada
+    model_dict = model.state_dict()
+
+    for name, param in state_dict.items():
+        if name in model_dict:
+            if param.size() == model_dict[name].size():
+                model_dict[name].copy_(param)
+            else:
+                st.warning(f"Ignoring {name} due to size mismatch: {param.size()} vs {model_dict[name].size()}")
+
+    model.load_state_dict(model_dict, strict=False)
 
     model.eval()
 
