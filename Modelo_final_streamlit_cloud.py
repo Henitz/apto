@@ -8,6 +8,7 @@ import requests
 import tempfile
 import random
 
+
 # Definindo a semente para garantir reprodutibilidade
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -16,6 +17,7 @@ def set_seed(seed):
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
 
 # Definição da função para baixar arquivos temporários do GitHub
 def baixar_arquivo_temporario(url):
@@ -30,6 +32,7 @@ def baixar_arquivo_temporario(url):
     else:
         st.error(f"Erro ao baixar o arquivo: {response.status_code}")
         return None
+
 
 # Definição do modelo de rede neural com regularização
 class RegularizedRegressionModel(nn.Module):
@@ -55,6 +58,7 @@ class RegularizedRegressionModel(nn.Module):
         l1_norm = sum(p.abs().sum() for p in self.parameters())
         l2_norm = sum(p.pow(2).sum() for p in self.parameters())
         return self.l1_lambda * l1_norm + self.l2_lambda * l2_norm
+
 
 # Função para carregar o modelo e scalers
 def load_model(model_path, scaler_X_path, scaler_y_path):
@@ -90,21 +94,24 @@ def load_model(model_path, scaler_X_path, scaler_y_path):
 
     return model, scaler_X, scaler_y
 
+
 # Função para fazer predição
 def make_prediction(model, scaler_X, scaler_y, input_data):
     input_data_scaled = scaler_X.transform(input_data)
     input_tensor = torch.tensor(input_data_scaled, dtype=torch.float32)
+
+    # Garantir consistência ao definir a semente antes da previsão
+    set_seed(42)
+
     with torch.no_grad():
         prediction = model(input_tensor)
     prediction_original = scaler_y.inverse_transform(prediction.numpy().reshape(-1, 1))
     return prediction_original
 
+
 # Interface Streamlit
 def main():
     st.title("Predição de Valor de Apartamento")
-
-    # Definir a semente
-    set_seed(42)
 
     # URLs dos arquivos no GitHub
     model_url = 'https://github.com/Henitz/apto/raw/master/best_model.pth'
@@ -141,6 +148,7 @@ def main():
             st.write(f"Valor Previsto: {valor_formatado}")
     else:
         st.error('Erro ao carregar o modelo ou os scalers.')
+
 
 if __name__ == "__main__":
     main()
