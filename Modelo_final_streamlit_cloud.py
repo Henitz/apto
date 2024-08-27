@@ -21,13 +21,11 @@ def set_seed(seed):
 
 # Definição da função para baixar arquivos temporários do GitHub
 def baixar_arquivo_temporario(url):
-    # st.write(f"Baixando arquivo de {url}...")
     response = requests.get(url)
     if response.status_code == 200:
         temp_file = tempfile.NamedTemporaryFile(delete=False)
         with open(temp_file.name, 'wb') as f:
             f.write(response.content)
-        # st.write(f"Arquivo baixado e salvo em {temp_file.name}")
         return temp_file.name
     else:
         st.error(f"Erro ao baixar o arquivo: {response.status_code}")
@@ -62,6 +60,8 @@ class RegularizedRegressionModel(nn.Module):
 
 # Função para carregar o modelo e scalers
 def load_model(model_path, scaler_X_path, scaler_y_path):
+    set_seed(42)  # Garantir que a semente seja aplicada antes de carregar o modelo
+
     checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
 
     model_config = checkpoint['model_config']
@@ -73,18 +73,9 @@ def load_model(model_path, scaler_X_path, scaler_y_path):
         l2_lambda=model_config['l2_lambda']
     )
 
-    # Ajustar as chaves do state_dict e corresponder as dimensões do modelo
     state_dict = checkpoint['model_state_dict']
-    adjusted_state_dict = {}
+    model.load_state_dict(state_dict)
 
-    for key in state_dict:
-        if key.startswith('network.') and key in model.state_dict():
-            if state_dict[key].shape == model.state_dict()[key].shape:
-                adjusted_state_dict[key] = state_dict[key]
-
-    model.load_state_dict(adjusted_state_dict, strict=False)
-
-    # Garantir que o modelo esteja em modo de avaliação
     model.eval()
 
     with open(scaler_X_path, 'rb') as f:
@@ -97,14 +88,14 @@ def load_model(model_path, scaler_X_path, scaler_y_path):
 
 # Função para fazer predição
 def make_prediction(model, scaler_X, scaler_y, input_data):
+    set_seed(42)  # Garantir que a semente seja aplicada antes de cada previsão
+
     input_data_scaled = scaler_X.transform(input_data)
     input_tensor = torch.tensor(input_data_scaled, dtype=torch.float32)
 
-    # Garantir consistência ao definir a semente antes da previsão
-    set_seed(42)
-
     with torch.no_grad():
         prediction = model(input_tensor)
+
     prediction_original = scaler_y.inverse_transform(prediction.numpy().reshape(-1, 1))
     return prediction_original
 
@@ -113,26 +104,23 @@ def make_prediction(model, scaler_X, scaler_y, input_data):
 def main():
     st.title("Predição de Valor de Apartamento")
 
-    # URLs dos arquivos no GitHub
+    set_seed(42)  # Garantir que a semente seja aplicada no início da aplicação
+
     model_url = 'https://github.com/Henitz/apto/raw/master/best_model.pth'
     scaler_X_url = 'https://github.com/Henitz/apto/raw/master/scaler_X.pkl'
     scaler_y_url = 'https://github.com/Henitz/apto/raw/master/scaler_y.pkl'
 
-    # Baixar os arquivos necessários
     model_path = baixar_arquivo_temporario(model_url)
     scaler_X_path = baixar_arquivo_temporario(scaler_X_url)
     scaler_y_path = baixar_arquivo_temporario(scaler_y_url)
 
     if model_path and scaler_X_path and scaler_y_path:
         model, scaler_X, scaler_y = load_model(model_path, scaler_X_path, scaler_y_path)
-        # st.write('Modelo e scalers carregados com sucesso.')
 
-        # Inputs do usuário
         area_util = st.text_input("Área Útil (m²)", value="0,0")
         suites = st.number_input("Número de Suítes", min_value=0, value=0, step=1)
         andar = st.number_input("Andar", min_value=0, value=0, step=1)
 
-        # Convertendo a entrada de área útil para float
         area_util = float(area_util.replace(",", "."))
 
         input_data = pd.DataFrame({
@@ -143,7 +131,6 @@ def main():
 
         if st.button("Prever Valor"):
             prediction = make_prediction(model, scaler_X, scaler_y, input_data)
-            # Formatar o valor previsto com separador de milhar como ponto e decimal como vírgula
             valor_formatado = f"R$ {prediction[0][0]:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
             st.write(f"Valor Previsto: {valor_formatado}")
     else:
