@@ -127,7 +127,8 @@ def main():
 
         if st.button("Prever Valor"):
             prediction = make_prediction(model, scaler_X, scaler_y, input_data)
-            st.write(f"Valor Previsto: R$ {prediction[0][0]:,.2f}")
+            st.write(f"Valor Previsto: R$ {prediction[0][0]:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
     else:
         st.error("Erro ao carregar o modelo ou scalers.")
 

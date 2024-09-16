@@ -104,5 +104,6 @@ input_data = np.array([[area_util, suites, vagas]])
 # Botão de predição
 if st.button('Prever'):
     prediction = make_prediction(model, scaler_X, scaler_y, input_data)
-    st.write(f"Valor previsto: R$ {prediction[0][0]:,.2f}")
+    st.write(f"Valor Previsto: R$ {prediction[0][0]:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
 
