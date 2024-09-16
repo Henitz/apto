@@ -101,11 +101,14 @@ def make_prediction(model, scaler_X, scaler_y, input_data):
 def main():
     st.title("Predição de Valor de Apartamento")
 
+    # Definir a semente para garantir previsões consistentes
+    set_seed(42)
+
     # Carregar o modelo e os scalers
     model_url = 'https://github.com/Henitz/apto/raw/master/best_model.pth'
     scaler_X_url = 'https://github.com/Henitz/apto/raw/master/scaler_X.pkl'
     scaler_y_url = 'https://github.com/Henitz/apto/raw/master/scaler_y.pkl'
-    
+
     model_path = baixar_arquivo_temporario(model_url)
     scaler_X_path = baixar_arquivo_temporario(scaler_X_url)
     scaler_y_path = baixar_arquivo_temporario(scaler_y_url)
@@ -138,5 +141,4 @@ def main():
 
 
 if __name__ == "__main__":
-    set_seed(42)  # Garantir que a semente seja consistente
     main()
