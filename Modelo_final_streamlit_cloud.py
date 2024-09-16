@@ -105,7 +105,7 @@ def main():
     model_url = 'https://github.com/Henitz/apto/raw/master/best_model.pth'
     scaler_X_url = 'https://github.com/Henitz/apto/raw/master/scaler_X.pkl'
     scaler_y_url = 'https://github.com/Henitz/apto/raw/master/scaler_y.pkl'
-
+    
     model_path = baixar_arquivo_temporario(model_url)
     scaler_X_path = baixar_arquivo_temporario(scaler_X_url)
     scaler_y_path = baixar_arquivo_temporario(scaler_y_url)
@@ -114,8 +114,13 @@ def main():
         model, scaler_X, scaler_y = load_model(model_path, scaler_X_path, scaler_y_path)
         model.eval()  # Coloca o modelo em modo de avaliação
 
-        # Inputs do usuário
-        area_util = st.number_input("Área Útil (m²)", min_value=0.0, value=0.0, step=1.0)
+        # Entrada de área útil com vírgula como separador decimal
+        area_util_input = st.text_input("Área Útil (m²)", value="0,0")
+        try:
+            area_util = float(area_util_input.replace(",", "."))
+        except ValueError:
+            st.error("Por favor, insira um valor numérico válido para a área útil.")
+
         suites = st.number_input("Número de Suítes", min_value=0, value=0, step=1)
         andar = st.number_input("Andar", min_value=0, value=0, step=1)
 
@@ -128,7 +133,6 @@ def main():
         if st.button("Prever Valor"):
             prediction = make_prediction(model, scaler_X, scaler_y, input_data)
             st.write(f"Valor Previsto: R$ {prediction[0][0]:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-
     else:
         st.error("Erro ao carregar o modelo ou scalers.")
 
