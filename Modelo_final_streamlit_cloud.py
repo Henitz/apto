@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import pandas as pd
@@ -113,6 +112,7 @@ def main():
 
     if model_path and scaler_X_path and scaler_y_path:
         model, scaler_X, scaler_y = load_model(model_path, scaler_X_path, scaler_y_path)
+        model.eval()  # Coloca o modelo em modo de avaliação
 
         # Inputs do usuário
         area_util = st.number_input("Área Útil (m²)", min_value=0.0, value=0.0, step=1.0)
