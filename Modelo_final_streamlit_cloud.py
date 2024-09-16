@@ -102,9 +102,9 @@ def main():
     st.title("Predição de Valor de Apartamento")
 
     # Carregar o modelo e os scalers
-    model_url = "https://github.com/Henitz/fase5/raw/main/best_model.pth"
-    scaler_X_url = "https://github.com/Henitz/fase5/raw/main/scaler_X.pkl"
-    scaler_y_url = "https://github.com/Henitz/fase5/raw/main/scaler_y.pkl"
+    model_url = "https://github.com/Henitz/fase5/raw/master/best_model.pth"
+    scaler_X_url = "https://github.com/Henitz/fase5/raw/master/scaler_X.pkl"
+    scaler_y_url = "https://github.com/Henitz/fase5/raw/master/scaler_y.pkl"
 
     model_path = baixar_arquivo_temporario(model_url)
     scaler_X_path = baixar_arquivo_temporario(scaler_X_url)
