@@ -8,7 +8,6 @@ import requests
 import tempfile
 import random
 
-
 # Definindo a semente para garantir reprodutibilidade
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -17,7 +16,6 @@ def set_seed(seed):
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-
 
 # Definição da função para baixar arquivos temporários do GitHub
 def baixar_arquivo_temporario(url):
@@ -30,7 +28,6 @@ def baixar_arquivo_temporario(url):
     else:
         st.error(f"Erro ao baixar o arquivo: {response.status_code}")
         return None
-
 
 # Definição do modelo de rede neural com regularização
 class RegularizedRegressionModel(nn.Module):
@@ -53,100 +50,59 @@ class RegularizedRegressionModel(nn.Module):
         return self.network(x)
 
     def regularization_loss(self):
-        l1_norm = sum(p.abs().sum() for p in self.parameters())
-        l2_norm = sum(p.pow(2).sum() for p in self.parameters())
+        l1_norm = sum(p.abs().sum() for p in self.network.parameters())
+        l2_norm = sum(p.pow(2.0).sum() for p in self.network.parameters())
         return self.l1_lambda * l1_norm + self.l2_lambda * l2_norm
 
-
-# Função para carregar o modelo e scalers
+# Função para carregar o modelo e os scalers
 def load_model(model_path, scaler_X_path, scaler_y_path):
-    set_seed(42)  # Garantir que a semente seja aplicada antes de carregar o modelo
-
-    checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
-
-    model_config = checkpoint['model_config']
-    model = RegularizedRegressionModel(
-        input_size=3,  # Três features: area_util, suites, andar
-        hidden_sizes=model_config['hidden_sizes'],
-        output_size=model_config['output_size'],
-        l1_lambda=model_config['l1_lambda'],
-        l2_lambda=model_config['l2_lambda']
-    )
-
-    state_dict = checkpoint['model_state_dict']
-
-    # Carregar o state_dict manualmente, camada por camada
-    model_dict = model.state_dict()
-
-    for name, param in state_dict.items():
-        if name in model_dict:
-            if param.size() == model_dict[name].size():
-                model_dict[name].copy_(param)
-            else:
-                st.warning(f"Ignoring {name} due to size mismatch: {param.size()} vs {model_dict[name].size()}")
-
-    model.load_state_dict(model_dict, strict=False)
-
-    model.eval()
-
+    model = torch.load(model_path)
     with open(scaler_X_path, 'rb') as f:
         scaler_X = pickle.load(f)
     with open(scaler_y_path, 'rb') as f:
         scaler_y = pickle.load(f)
-
     return model, scaler_X, scaler_y
 
-
-# Função para fazer predição
+# Função para fazer a predição
 def make_prediction(model, scaler_X, scaler_y, input_data):
-    set_seed(42)  # Garantir que a semente seja aplicada antes de cada previsão
-
     input_data_scaled = scaler_X.transform(input_data)
-    input_tensor = torch.tensor(input_data_scaled, dtype=torch.float32)
+    input_data_tensor = torch.tensor(input_data_scaled, dtype=torch.float32)
+    prediction = model(input_data_tensor)
+    prediction_unscaled = scaler_y.inverse_transform(prediction.detach().numpy())
+    return prediction_unscaled
 
-    with torch.no_grad():
-        prediction = model(input_tensor)
+# URL dos arquivos necessários
+model_url = 'https://github.com/Henitz/apto/raw/master/best_model.pth'
+scaler_X_url = 'https://github.com/Henitz/apto/raw/master/scaler_X.pkl'
+scaler_y_url = 'https://github.com/Henitz/apto/raw/master/scaler_y.pkl'
 
-    prediction_original = scaler_y.inverse_transform(prediction.numpy().reshape(-1, 1))
-    return prediction_original
+# Caminhos temporários
+model_path = baixar_arquivo_temporario(model_url)
+scaler_X_path = baixar_arquivo_temporario(scaler_X_url)
+scaler_y_path = baixar_arquivo_temporario(scaler_y_url)
 
-
-# Interface Streamlit
-def main():
-    st.title("Predição de Valor de Apartamento")
-
-    set_seed(42)  # Garantir que a semente seja aplicada no início da aplicação
-
-    model_url = 'https://github.com/Henitz/apto/raw/master/best_model.pth'
-    scaler_X_url = 'https://github.com/Henitz/apto/raw/master/scaler_X.pkl'
-    scaler_y_url = 'https://github.com/Henitz/apto/raw/master/scaler_y.pkl'
-
-    model_path = baixar_arquivo_temporario(model_url)
-    scaler_X_path = baixar_arquivo_temporario(scaler_X_url)
-    scaler_y_path = baixar_arquivo_temporario(scaler_y_url)
-
-    if model_path and scaler_X_path and scaler_y_path:
-        model, scaler_X, scaler_y = load_model(model_path, scaler_X_path, scaler_y_path)
-
-        area_util = st.text_input("Área Útil (m²)", value="0,0")
-        suites = st.number_input("Número de Suítes", min_value=0, value=0, step=1)
-        andar = st.number_input("Andar", min_value=0, value=0, step=1)
-
-        area_util = float(area_util.replace(",", "."))
-
-        input_data = pd.DataFrame({
-            'area_util': [area_util],
-            'suites': [suites],
-            'andar': [andar]
-        })
-
-        if st.button("Prever Valor"):
-            prediction = make_prediction(model, scaler_X, scaler_y, input_data)
-            valor_formatado = f"R$ {prediction[0][0]:,.2f}".replace(",", "v").replace(".", ",").replace("v", ".")
-            st.write(f"Valor Previsto: {valor_formatado}")
+# Carregar o modelo e os scalers
+if model_path and scaler_X_path and scaler_y_path:
+    model, scaler_X, scaler_y = load_model(model_path, scaler_X_path, scaler_y_path)
+    if model is not None:
+        model.eval()
     else:
-        st.error('Erro ao carregar o modelo ou os scalers.')
+        st.error("Erro ao carregar o modelo.")
+else:
+    st.error("Erro ao baixar os arquivos necessários para o modelo.")
 
+# Interface do usuário usando Streamlit
+st.title('Predição de Valores com Rede Neural')
 
-if __name__ == "__main__":
-    main()
+# Entrada dos dados pelo usuário
+area_util = st.number_input('Área útil (m²):', value=0.0)
+suites = st.number_input('Número de suítes:', value=0)
+vagas = st.number_input('Número de vagas:', value=0)
+
+input_data = np.array([[area_util, suites, vagas]])
+
+# Botão de predição
+if st.button('Prever'):
+    prediction = make_prediction(model, scaler_X, scaler_y, input_data)
+    st.write(f"Valor previsto: R$ {prediction[0][0]:,.2f}")
+
