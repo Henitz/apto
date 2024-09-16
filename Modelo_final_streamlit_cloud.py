@@ -8,6 +8,7 @@ import requests
 import tempfile
 import random
 
+
 # Definindo a semente para garantir reprodutibilidade
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -16,6 +17,7 @@ def set_seed(seed):
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
 
 # Definição da função para baixar arquivos temporários do GitHub
 def baixar_arquivo_temporario(url):
@@ -28,6 +30,7 @@ def baixar_arquivo_temporario(url):
     else:
         st.error(f"Erro ao baixar o arquivo: {response.status_code}")
         return None
+
 
 # Definição do modelo de rede neural com regularização
 class RegularizedRegressionModel(nn.Module):
@@ -89,8 +92,15 @@ def load_model(model_path, scaler_X_path, scaler_y_path):
 
 # Função para fazer predição
 def make_prediction(model, scaler_X, scaler_y, input_data):
+    # Garantir que a semente seja definida sempre antes de prever
+    set_seed(42)
+
     input_data_scaled = scaler_X.transform(input_data)
     input_tensor = torch.tensor(input_data_scaled, dtype=torch.float32)
+
+    # Certificar-se de que o modelo está no modo de avaliação
+    model.eval()
+
     with torch.no_grad():
         prediction = model(input_tensor)
     prediction_original = scaler_y.inverse_transform(prediction.numpy().reshape(-1, 1))
@@ -100,9 +110,6 @@ def make_prediction(model, scaler_X, scaler_y, input_data):
 # Interface Streamlit
 def main():
     st.title("Predição de Valor de Apartamento")
-
-    # Definir a semente para garantir previsões consistentes
-    set_seed(42)
 
     # Carregar o modelo e os scalers
     model_url = 'https://github.com/Henitz/apto/raw/master/best_model.pth'
@@ -115,7 +122,10 @@ def main():
 
     if model_path and scaler_X_path and scaler_y_path:
         model, scaler_X, scaler_y = load_model(model_path, scaler_X_path, scaler_y_path)
-        model.eval()  # Coloca o modelo em modo de avaliação
+
+        # Reinicializar o modelo no modo de avaliação e definir a semente sempre que for fazer a predição
+        model.eval()
+        set_seed(42)
 
         # Entrada de área útil com vírgula como separador decimal
         area_util_input = st.text_input("Área Útil (m²)", value="0,0")
@@ -135,7 +145,8 @@ def main():
 
         if st.button("Prever Valor"):
             prediction = make_prediction(model, scaler_X, scaler_y, input_data)
-            st.write(f"Valor Previsto: R$ {prediction[0][0]:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+            st.write(
+                f"Valor Previsto: R$ {prediction[0][0]:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
     else:
         st.error("Erro ao carregar o modelo ou scalers.")
 
